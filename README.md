@@ -2,11 +2,15 @@
 
 # autoreload
 
-`autoreload` provides a package for automatically reloading an executable when that executable changes. It intended to be used in a local development environment to reload the executable after it has been modified as part of the development process. An example use case, would be to reload a go web app after you have edit the source code and recompiled the executable.
+`autoreload` provides a package or command for automatically reloading an executable when that executable changes. It intended to be used in a local development environment to reload the executable after it has been modified as part of the development process. An example use case, would be to reload a go web app after you have edit the source code and recompiled the executable.
 
 ## Installation
 
-`autoreload` can be used as a package that is integrated into your application:
+`autoreload` can be used as a package that is integrated into your application or as a command that is supplied an executable to monitor.
+
+### Installation via Package
+
+To integrate the package into your application, follow the example below.
 
 ```
 package main
@@ -25,3 +29,77 @@ func main() {
 ```
 
 See the [provided example](https://github.com/agschwender/autoreload/blob/main/example/main.go) for greater detail on how to integrate the package into your application.
+
+### Installation via Command
+
+To integrate the command into your application, you must first install the `autoreload` command:
+
+```
+$ go install github.com/agschwender/autoreload/autoreloader@v1.1.0
+```
+
+Once installed, you can then execute the command by supplying it with the executable you want it to monitor and restart. For example if you wanted to run your server command, it may look like this:
+
+```
+$ autoreloader server --port=8080
+```
+
+## Demo
+
+You can verify the behavior of the package or command installation by using the provided `example` command.
+
+In one terminal, compile the commands
+
+```
+$ go install ./...
+```
+
+In another terminal, run
+
+```
+$ example
+2022/11/18 10:06:43 Starting application
+2022/11/18 10:06:43 Auto-reload is enabled
+2022/11/18 10:06:43 Starting HTTP server
+```
+
+Change the `example/main.go` file and then re-install, using the first terminal
+
+```
+$ go install ./...
+```
+
+You should see the reload happen in your second terminal
+
+```
+2022/11/18 10:06:57 Executable changed; reloading process
+2022/11/18 10:06:57 Received change event, shutting down
+2022/11/18 10:06:58 Starting application
+2022/11/18 10:06:58 Auto-reload is enabled
+2022/11/18 10:06:58 Starting HTTP server 2
+```
+
+Similarly, you can run via the `autoreloader` with the `example` commands build in reloading turned off.
+
+In your second terminal, run
+
+```
+$ autoreloader example --autoreload=false
+2022/11/18 10:10:11 Starting application
+2022/11/18 10:10:11 Starting HTTP server
+```
+
+Again make a change to the `example/main.go` file and then re-install, using the first terminal
+
+```
+$ go install ./...
+```
+
+You should see the reload happen in your second terminal
+
+```
+2022/11/18 10:11:08 Executable changed; reloading process
+2022/11/18 10:11:09 Killing process
+2022/11/18 10:11:09 Starting application
+2022/11/18 10:11:09 Starting HTTP server 2
+```
