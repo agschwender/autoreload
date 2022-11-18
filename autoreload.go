@@ -20,7 +20,10 @@ type onReloadFunc func()
 // Logger defines an interface for logging info and fatal errors out of
 // the autoreloader process.
 type Logger interface {
+	// Info is intended to log an informational message
 	Info(string)
+
+	// Fatal is intended to log an error message and exits the application
 	Fatal(string, error)
 }
 
@@ -116,15 +119,18 @@ func (ar AutoReloader) Start() {
 	go func() {
 		for {
 			select {
-			case <-watcher.Events:
-				ar.logger.Info("Executable changed; reloading process")
-				sleep(250*time.Millisecond, watcher.Events)
-				ar.onReload()
-				for i := 0; i < ar.maxAttempts; i++ {
-					tryExec(ar.logger, execPath, os.Args, os.Environ())
-					sleep(250*time.Millisecond, watcher.Events)
+			case event := <-watcher.Events:
+				if event.Has(fsnotify.Write) || event.Has(fsnotify.Create) {
+					ar.logger.Info("Executable changed; reloading process")
+					for i := 0; i < ar.maxAttempts; i++ {
+						sleep(250*time.Millisecond, watcher.Events)
+						if i == 0 {
+							ar.onReload()
+						}
+						tryExec(ar.logger, execPath, os.Args, os.Environ())
+					}
+					ar.logger.Fatal("Failed to reload process", nil)
 				}
-				ar.logger.Fatal("Failed to reload process", nil)
 			case err := <-watcher.Errors:
 				must(ar.logger, err, "Error watching file")
 			case <-ar.ctx.Done():
