@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"log"
 	"net/http"
 	"os"
@@ -14,14 +15,25 @@ import (
 func main() {
 	log.Printf("Starting application")
 
+	// In a real production environment, you will likely want the
+	// autoreload flag or environment variables to be defaulted to false
+	// so that it is only enabled in the local environment.
+	var shouldAutoReload bool
+	flag.BoolVar(&shouldAutoReload, "autoreload", true, "enable autoreload")
+	flag.Parse()
+
 	server := &http.Server{Addr: ":8000"}
 
-	autoreload.New(
-		autoreload.WithMaxAttempts(6),
-		autoreload.WithOnReload(func() {
-			server.Shutdown(context.Background())
-		}),
-	).Start()
+	if shouldAutoReload {
+		log.Printf("Auto-reload is enabled")
+		autoreload.New(
+			autoreload.WithMaxAttempts(6),
+			autoreload.WithOnReload(func() {
+				log.Printf("Received change event, shutting down")
+				server.Shutdown(context.Background())
+			}),
+		).Start()
+	}
 
 	go func() {
 		log.Printf("Starting HTTP server")
