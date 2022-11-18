@@ -119,18 +119,16 @@ func (ar AutoReloader) Start() {
 	go func() {
 		for {
 			select {
-			case event := <-watcher.Events:
-				if event.Has(fsnotify.Write) || event.Has(fsnotify.Create) {
-					ar.logger.Info("Executable changed; reloading process")
-					for i := 0; i < ar.maxAttempts; i++ {
-						sleep(250*time.Millisecond, watcher.Events)
-						if i == 0 {
-							ar.onReload()
-						}
-						tryExec(ar.logger, execPath, os.Args, os.Environ())
+			case <-watcher.Events:
+				ar.logger.Info("Executable changed; reloading process")
+				for i := 0; i < ar.maxAttempts; i++ {
+					sleep(250*time.Millisecond, watcher.Events)
+					if i == 0 {
+						ar.onReload()
 					}
-					ar.logger.Fatal("Failed to reload process", nil)
+					tryExec(ar.logger, execPath, os.Args, os.Environ())
 				}
+				ar.logger.Fatal("Failed to reload process", nil)
 			case err := <-watcher.Errors:
 				must(ar.logger, err, "Error watching file")
 			case <-ar.ctx.Done():

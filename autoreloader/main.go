@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"sync"
+	"time"
 
 	"github.com/agschwender/autoreload"
 )
@@ -21,10 +22,22 @@ func main() {
 		log.Fatalf("Cannot find executable: %s", os.Args[1])
 	}
 
+	// Define the command and redirect output
 	cmd := exec.Command(path, os.Args[2:]...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
+	// Start the supplied command
+	err = cmd.Start()
+	if err != nil {
+		log.Fatalf("Failed to spawn process: %v", err)
+	}
+
+	// Starting the command above can trigger watch events that would
+	// trigger a reload. Delay defining the autoreloader monitor.
+	time.Sleep(250 * time.Millisecond)
+
+	// Setup wait for reload
 	var wg sync.WaitGroup
 
 	// Start the autoreloader monitor.
@@ -33,10 +46,9 @@ func main() {
 		autoreload.WithOnReload(func() {
 			// When the application needs to reload, we must kill the
 			// spawned command.
-
-			log.Printf("Killing process")
+			log.Printf("Killing spawned process")
 			if err := cmd.Process.Kill(); err != nil {
-				log.Fatalf("Failed to kill process: %v", err)
+				log.Fatalf("Failed to kill spawned process: %v", err)
 			}
 
 			// Add to the wait group so that the autoreloader executable
@@ -45,8 +57,8 @@ func main() {
 		}),
 	).Start()
 
-	// Run the supplied command
-	err = cmd.Run()
+	// Wait for the command to complete.
+	err = cmd.Wait()
 
 	// If there is anything in the wait group, it means that the
 	// autoreloader package is restarting the executable. Wait here
