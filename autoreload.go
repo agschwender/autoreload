@@ -17,6 +17,8 @@ const defaultMaxAttempts = 10
 
 type onReloadFunc func()
 
+// Logger defines an interface for logging info and fatal errors out of
+// the autoreloader process.
 type Logger interface {
 	Info(string)
 	Fatal(string, error)
@@ -32,6 +34,7 @@ func (l *defaultLogger) Fatal(msg string, err error) {
 	log.Fatalf("%s: %v\n", msg, err)
 }
 
+// AutoReloader provides functionality for reloading an application.
 type AutoReloader struct {
 	cmd         string
 	logger      Logger
@@ -44,6 +47,7 @@ type AutoReloader struct {
 
 type option func(*AutoReloader)
 
+// New creates a new AutoReloader with the supplied options.
 func New(opts ...option) AutoReloader {
 	ctx, cancel := context.WithCancel(context.TODO())
 	autoReloader := &AutoReloader{
@@ -59,24 +63,33 @@ func New(opts ...option) AutoReloader {
 	return *autoReloader
 }
 
+// WithCommand defines the command executable that AutoReloader should
+// watch. By default, this will be the currently running command.
 func WithCommand(cmd string) option {
 	return func(autoReloader *AutoReloader) {
 		autoReloader.cmd = cmd
 	}
 }
 
+// WithLogger defines the logger that the AutoReloader will use. By
+// default, it will log using the built-in log package.
 func WithLogger(logger Logger) option {
 	return func(autoReloader *AutoReloader) {
 		autoReloader.logger = logger
 	}
 }
 
+// WithMaxAttempts defines how many times the AutoReloader should
+// attempt to reload the application. By default, this is 10.
 func WithMaxAttempts(maxAttempts int) option {
 	return func(autoReloader *AutoReloader) {
 		autoReloader.maxAttempts = maxAttempts
 	}
 }
 
+// WithOnReload defines a callback that is executed just prior to
+// reloading the application. This is useful for gracefully shutting
+// down your application.
 func WithOnReload(onReload onReloadFunc) option {
 	return func(autoReloader *AutoReloader) {
 		autoReloader.onReload = onReload
@@ -86,7 +99,7 @@ func WithOnReload(onReload onReloadFunc) option {
 // Start launches a goroutine that periodically checks if the modified
 // time of the command has changed. If so, the binary is re-executed
 // with the same arguments. This is a developer convenience and not
-// intended to be started in the production environment.
+// intended to be started in a production environment.
 func (ar AutoReloader) Start() {
 	cmd := ar.cmd
 	if cmd == "" {
