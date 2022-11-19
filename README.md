@@ -4,7 +4,7 @@
 
 `autoreload` provides a package and command for automatically reloading an executable when that executable changes. It is intended to be used in a local development environment to reload the executable after it has been modified. An example use case would be to reload a go web app after you have edited the source code and recompiled the executable.
 
-This approach can be useful when you prefer to manually rebuild your application instead of relying functionality that watches your source files, recompiles the application and finally restarts the it. In my experience, the manual approach to rebuilding allows greater control of when it is triggered and provides more visibility on when it completes so that you can know that your changes are present when you retest.
+This approach can be useful when you prefer to manually rebuild your application instead of relying on functionality that watches your source files, recompiles the application and finally restarts it. In my experience, the manual approach to rebuilding allows for greater control of when it is triggered and provides more visibility on when it completes so that you can know that your changes are present when you retest. Additionally, if you run your local environment via Docker, e.g. something like [go-local](https://github.com/agschwender/go-local), this approach to reloading the application avoids having to install anything extra on your host machine.
 
 ## Installation
 
@@ -81,7 +81,7 @@ You should see the reload happen in your second terminal
 2022/11/18 10:06:58 Starting HTTP server 2
 ```
 
-Similarly, you can run via the `autoreloader` with the `example` commands build in reloading turned off.
+Similarly, you can run via the `autoreloader` with the `example` command's built-in reloading turned off.
 
 In your second terminal, run
 
