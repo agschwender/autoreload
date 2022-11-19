@@ -37,7 +37,7 @@ See the [provided example](https://github.com/agschwender/autoreload/blob/main/e
 To integrate the command into your application, you must first install the `autoreload` command:
 
 ```
-$ go install github.com/agschwender/autoreload/autoreloader@v1.1.0
+$ go install github.com/agschwender/autoreload/autoreloader@v1.1.1
 ```
 
 Once installed, you can then execute the command by supplying it with the executable you want it to monitor and restart. For example if you wanted to run your server command, it may look like this:
