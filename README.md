@@ -4,6 +4,8 @@
 
 `autoreload` provides a package and command for automatically reloading an executable when that executable changes. It intended to be used in a local development environment to reload the executable after it has been modified. An example use case would be to reload a go web app after you have edited the source code and recompiled the executable.
 
+This approach can be useful when you prefer to manually rebuild your application instead of relying functionality that watches your source files, recompiles the application and finally restarts the it. In my experience, the manual approach to rebuilding allows greater control of when it is triggered and provides more visibility on when it completes so that you can know that your changes are present when you retest.
+
 ## Installation
 
 `autoreload` can be used as a package that is integrated into your application or as a command that is supplied an executable to monitor.
