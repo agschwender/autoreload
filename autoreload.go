@@ -3,6 +3,7 @@ package autoreload
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -23,8 +24,8 @@ type Logger interface {
 	// Info is intended to log an informational message
 	Info(string)
 
-	// Fatal is intended to log an error message and exits the application
-	Fatal(string, error)
+	// Error is intended to log an error message
+	Error(string, error)
 }
 
 type defaultLogger struct{}
@@ -33,8 +34,8 @@ func (l *defaultLogger) Info(msg string) {
 	log.Println(msg)
 }
 
-func (l *defaultLogger) Fatal(msg string, err error) {
-	log.Fatalf("%s: %v\n", msg, err)
+func (l *defaultLogger) Error(msg string, err error) {
+	log.Printf("%s: %v\n", msg, err)
 }
 
 // AutoReloader provides functionality for reloading an application.
@@ -128,7 +129,7 @@ func (ar AutoReloader) Start() {
 					}
 					tryExec(ar.logger, execPath, os.Args, os.Environ())
 				}
-				ar.logger.Fatal("Failed to reload process", nil)
+				fatal(ar.logger, "Failed to reload process", errors.New("max attempts reached"))
 			case err := <-watcher.Errors:
 				must(ar.logger, err, "Error watching file")
 			case <-ar.ctx.Done():
@@ -145,14 +146,14 @@ func (ar AutoReloader) Stop() {
 
 func must(logger Logger, err error, msg string) {
 	if err != nil {
-		logger.Fatal(msg, err)
+		fatal(logger, msg, err)
 	}
 }
 
 func mustLookPath(logger Logger, name string) string {
 	path, err := exec.LookPath(name)
 	if err != nil {
-		logger.Fatal(fmt.Sprintf("Cannot find executable: %s", name), err)
+		fatal(logger, fmt.Sprintf("Cannot find executable: %s", name), err)
 	}
 	return path
 }
@@ -177,7 +178,12 @@ func tryExec(logger Logger, argv0 string, argv []string, envv []string) {
 				return
 			}
 		}
-		logger.Fatal(fmt.Sprintf("syscall.Exec: %s", argv0), err)
+		fatal(logger, fmt.Sprintf("syscall.Exec: %s", argv0), err)
 	}
 	os.Exit(0)
+}
+
+func fatal(logger Logger, msg string, err error) {
+	logger.Error(msg, err)
+	os.Exit(1)
 }
