@@ -160,7 +160,7 @@ func mustLookPath(logger Logger, name string) string {
 
 // sleep pauses the current goroutine for at least duration d, swallowing
 // all fsnotify events received in the interim.
-func sleep(d time.Duration, events chan fsnotify.Event) { // nolint: unparam
+func sleep(d time.Duration, events chan fsnotify.Event) {
 	timer := time.After(d)
 	for {
 		select {
