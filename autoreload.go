@@ -38,6 +38,11 @@ func (l *defaultLogger) Error(msg string, err error) {
 	log.Printf("%s: %v\n", msg, err)
 }
 
+type noopLogger struct{}
+
+func (l *noopLogger) Info(msg string)             {} // nolint: unparam
+func (l *noopLogger) Error(msg string, err error) {} // nolint: unparam
+
 // AutoReloader provides functionality for reloading an application.
 type AutoReloader struct {
 	cmd         string
@@ -76,16 +81,24 @@ func WithCommand(cmd string) option {
 }
 
 // WithLogger defines the logger that the AutoReloader will use. By
-// default, it will log using the built-in log package.
+// default, it will log using the built-in log package. When a nil value
+// is supplied for the logger, logging will be disabled.
 func WithLogger(logger Logger) option {
+	if logger == nil {
+		logger = &noopLogger{}
+	}
 	return func(autoReloader *AutoReloader) {
 		autoReloader.logger = logger
 	}
 }
 
 // WithMaxAttempts defines how many times the AutoReloader should
-// attempt to reload the application. By default, this is 10.
+// attempt to reload the application. By default, this is 10. If the
+// supplied maxAttempts is less than 1, it will be treated as 1.
 func WithMaxAttempts(maxAttempts int) option {
+	if maxAttempts < 1 {
+		maxAttempts = 1
+	}
 	return func(autoReloader *AutoReloader) {
 		autoReloader.maxAttempts = maxAttempts
 	}
@@ -95,6 +108,9 @@ func WithMaxAttempts(maxAttempts int) option {
 // reloading the application. This is useful for gracefully shutting
 // down your application.
 func WithOnReload(onReload onReloadFunc) option {
+	if onReload == nil {
+		onReload = func() {}
+	}
 	return func(autoReloader *AutoReloader) {
 		autoReloader.onReload = onReload
 	}
